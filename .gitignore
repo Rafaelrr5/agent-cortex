@@ -1,0 +1,16 @@
+# derived state: rebuildable from facts.jsonl with `python cortex.py rebuild`
+*.db
+*.db-wal
+*.db-shm
+facts.jsonl.lock
+
+# never
+.env
+.env.*
+*.pem
+*.key
+
+__pycache__/
+*.pyc
+.venv/
+venv/
