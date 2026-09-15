@@ -151,9 +151,15 @@ repo, apart from the two Python scripts they call by path.
 
 ## Articles
 
-Short teaching pieces, each anchored to a file in this repo. The queue lives in
-[`articles/BACKLOG.md`](articles/BACKLOG.md) and is ordered by how often the
-question actually comes up, not by what is most interesting to write.
+Short pieces on working with agents, each anchored to something in this repo you
+can read and run. Full index in [`articles/`](articles).
+
+| Article | The question it answers |
+|---|---|
+| [Implemented and tested is not evidence](articles/implemented-and-tested-is-not-evidence.md) | Why an agent's closing summary cannot be trusted, and what to read instead |
+| [Why your agent forgets everything](articles/why-your-agent-forgets-everything.md) | Why every session starts from zero, and what a memory store has to get right |
+| [Five agents, one repo](articles/five-agents-one-repo.md) | Running concurrent agents on one codebase without them overwriting each other |
+| [Why brand skills matter more than brand guidelines](articles/why-brand-skills-matter.md) | The business argument for executable brand rules: review cost, not aesthetics |
 
 ## Scope
 
