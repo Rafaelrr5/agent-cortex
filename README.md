@@ -4,7 +4,7 @@ Long-term memory and working discipline for coding agents.
 
 An agent's context window is short-term memory. Everything it learned about your
 stack dies when the session ends, so you explain the same procedure again next
-week. This repo is the part that survives: a single-file memory store, plus 22
+week. This repo is the part that survives: a single-file memory store, plus 23
 procedures that encode how the work is actually checked.
 
 Nothing here is a framework. Every file is something I run, extracted from a
@@ -65,7 +65,7 @@ so. It never crashes for a missing optional dependency.
 
 ---
 
-## `skills/` — 22 procedures
+## `skills/` — 23 procedures
 
 Markdown documents, readable by a human and loadable by any agent that supports
 skill files. They encode the checks, not the happy path.
@@ -118,6 +118,7 @@ skill files. They encode the checks, not the happy path.
 
 | Skill | What it is for |
 |---|---|
+| [`first-run-onboarding`](skills/first-run-onboarding) | A non-technical person's first Hermes session: safe defaults, the two honesty skills, and a six-question interview saved to memory so the next conversation starts knowing them. |
 | [`new-project-scaffolding`](skills/new-project-scaffolding) | Start a new project inheriting the conventions the rest of your work already uses. |
 | [`codebase-inspection`](skills/codebase-inspection) | Size up an unfamiliar codebase: lines, languages, test-to-source ratio. |
 | [`blocked-page-recovery`](skills/blocked-page-recovery) | A fetch that returns 403, 429, a paywall or a bot wall, and what to try in what order. |
