@@ -1,0 +1,12 @@
+[
+  {
+    "question": "What makes the comparison fair?",
+    "choices": [
+      "Identical inputs",
+      "Different inputs"
+    ],
+    "answer": 0,
+    "learning_index": 0,
+    "explanation": "Use identical inputs for fair comparisons."
+  }
+]

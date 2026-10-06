@@ -4,12 +4,14 @@ Long-term memory and working discipline for coding agents.
 
 An agent's context window is short-term memory. Everything it learned about your
 stack dies when the session ends, so you explain the same procedure again next
-week. This repo is the part that survives: a single-file memory store, plus 23
-procedures that encode how the work is actually checked.
+week. This repo is the part that survives: a single-file memory store, 30
+working procedures, four scheduled-job examples and a separately credited
+collection of skills by other authors.
 
-Nothing here is a framework. Every file is something I run, extracted from a
-daily setup with everything client-specific removed, and each one exists because
-a particular failure cost me an afternoon.
+The original procedures are extracted from my daily setup with client-specific
+material removed. The runnable examples use isolated fixtures rather than live
+accounts. Third-party skills stay in their own directory with their upstream
+licenses and authors intact.
 
 ---
 
@@ -65,7 +67,7 @@ so. It never crashes for a missing optional dependency.
 
 ---
 
-## `skills/` — 23 procedures
+## `skills/` — 30 procedures
 
 Markdown documents, readable by a human and loadable by any agent that supports
 skill files. They encode the checks, not the happy path.
@@ -123,10 +125,65 @@ skill files. They encode the checks, not the happy path.
 | [`codebase-inspection`](skills/codebase-inspection) | Size up an unfamiliar codebase: lines, languages, test-to-source ratio. |
 | [`blocked-page-recovery`](skills/blocked-page-recovery) | A fetch that returns 403, 429, a paywall or a bot wall, and what to try in what order. |
 
+### Runnable verification examples
+
+| Skill | Decision and observed check |
+|---|---|
+| [`delivery-verification`](skills/delivery-verification) | A completed checklist must cover the stated acceptance criteria. Two fixture tests cover accepted and refused records; a recorded claim still needs independent evidence. |
+| [`isolated-worktree-testing`](skills/isolated-worktree-testing) | Capture staged and unstaged changes before creating the test worktree. Four tests verify source preservation and refusal of untracked files, submodules and an existing target. |
+| [`agent-branch-integration`](skills/agent-branch-integration) | Check ancestry without merging or pushing. Three disposable-repository tests pass; ancestry alone does not establish compatibility. |
+| [`contrastive-refactor-demo`](skills/contrastive-refactor-demo) | Compare the same four inputs before and after. The fixture has one failure before and zero after; a deliberately regressed implementation makes the audit fail. |
+| [`multi-layout-preview`](skills/multi-layout-preview) | Render both layouts and check the browser console and marked text containers. Both fixtures pass; injected console errors and clipping each fail. Requires optional Playwright and Chromium. |
+| [`windows-desktop-automation`](skills/windows-desktop-automation) | Test the native argument boundary rather than trusting a command string. Thirteen PowerShell argv round-trips and four stubbed focus scenarios pass without controlling a real desktop window. |
+| [`single-source-training-materials`](skills/single-source-training-materials) | Generate slides, summary and quiz from one authored fixture. Self-test verifies shared-source updates, escaping and rejection of three invalid inputs. |
+
+These checks ran locally on Windows with Python 3.12.10. They establish the
+fixture behavior, not production readiness, cross-platform coverage or a
+performance benchmark. Each directory contains its commands and limitations.
+
+A real screenshot from the two-layout fixture check:
+
+![Card-layout fixture rendered in headless Chromium](skills/multi-layout-preview/outputs/a-cards.png)
+
 The thread running through all of them: **an agent's closing message is a
 self-report, not evidence.** "Implemented and tested" routinely means one file
 written and nothing run. Every skill ends with a verification section naming the
 command whose real output would prove the claim.
+
+## `crons/` — scheduled-job examples
+
+These are standalone local examples, not exports of an active scheduler. Every
+scheduler recipe is disabled by default; nothing registers or runs a job for you.
+
+| Example | Failure the example prevents |
+|---|---|
+| [`conflict-aware-git-sync`](crons/conflict-aware-git-sync) | A conflict silently overwriting local work, or a sync committing someone else's staged files. Only explicit owned paths may be committed; there is no push operation. |
+| [`change-gated-monitor`](crons/change-gated-monitor) | An assistant waking itself again after replying, or losing its baseline during an outage. The wake identity tracks requests, not replies. |
+| [`approval-aware-retry`](crons/approval-aware-retry) | A human approval gate turning into permission merely because time passed. Operational retries have a cooldown and limit; processing is simulated locally. |
+| [`durable-follow-up`](crons/durable-follow-up) | An unresolved obligation disappearing when it ages out of a rolling scan window. Explicit evidence resolves it; replay-safe state retains the decision. |
+
+All 19 tests pass, including CLI lifecycles and disposable local Git remotes.
+State assumes one writer. Output on stdout is not a delivered notification;
+connecting a real scheduler or destination is a separate, explicit operation.
+
+## Useful skills by other authors
+
+These are curated upstream copies, **not my work**. They are kept separate from
+`skills/`, pinned to specific commits and retain their original notices. Read the
+[usage guide](third_party/README.md), [licenses and attribution](THIRD_PARTY_NOTICES.md)
+and [per-file provenance](third_party/manifest.json) before reuse.
+
+| Skill | Author / maintainer | Why it is included | License |
+|---|---|---|---|
+| [Ponytail](third_party/ponytail/SKILL.md) | [DietrichGebert](https://github.com/DietrichGebert/ponytail) | Prefer the smallest working solution without skipping root-cause investigation or verification. | MIT |
+| [Caveman](third_party/caveman/SKILL.md) | [Julius Brussee](https://github.com/JuliusBrussee/caveman) | Reduce explanatory padding while preserving technical details. Base prose skill only; modes, hooks and runtime are not bundled. | Apache-2.0 |
+| [ML Paper Writing](third_party/ml-paper-writing/SKILL.md) | [Orchestra Research](https://github.com/orchestra-research/AI-Research-SKILLs) | Structure papers around actual results and checked literature. Includes five research references; conference templates and companion skills must be obtained separately. | MIT |
+| [Grounded Citations](third_party/grounded-citations/SKILL.md) | Hermes Agent + Teknium, [Nous Research](https://github.com/NousResearch/hermes-agent) | Keep a source ledger and reject missing quotation evidence. Includes standalone standard-library scripts; retrieval tools are not bundled. | MIT |
+
+Twenty-one upstream files match their pinned remote SHA-256 hashes. The bundled
+citation scripts pass lifecycle, invalid-evidence and standalone fallback checks.
+The other three skills are prose; these checks do not reproduce their upstream
+benchmark claims or establish agent-specific command support.
 
 ---
 
@@ -144,9 +201,11 @@ python cortex.py rebuild               # embeds what is already stored
 live. Point it at a git repo if you want memory to sync between machines, and set
 `merge=union` on `facts.jsonl` in `.gitattributes`.
 
-Skills: copy the folders you want into wherever your agent loads skills from.
-They are plain markdown with YAML frontmatter and no runtime dependency on this
-repo, apart from the two Python scripts they call by path.
+Skills: copy only the folders you want into your agent's documented skill search
+path. Markdown instructions are readable without installing this repo. Some
+procedures include Python helpers or optional browser tools; their own docs state
+the requirements. Keep third-party LICENSE and NOTICE files with copied skills.
+No installer changes your active profile or registers scheduled jobs.
 
 ---
 
@@ -171,4 +230,6 @@ Issues and PRs welcome, particularly measurements that contradict the table
 above. The ranking decisions here were made by running the queries, and should be
 revised the same way.
 
-MIT.
+Original material is MIT. Third-party works retain the licenses listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), including Caveman's Apache-2.0
+license. The root MIT license does not relicense those works.

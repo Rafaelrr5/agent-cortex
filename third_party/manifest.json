@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "ponytail",
+      "original_author": "DietrichGebert",
+      "source_url": "https://github.com/DietrichGebert/ponytail",
+      "commit_sha": "552acd5efd0aeae2583a12efe39373d2f076f25e",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "third_party/ponytail/LICENSE",
+          "upstream_path": "LICENSE",
+          "source_url": "https://raw.githubusercontent.com/DietrichGebert/ponytail/552acd5efd0aeae2583a12efe39373d2f076f25e/LICENSE",
+          "sha256": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab"
+        },
+        {
+          "path": "third_party/ponytail/SKILL.md",
+          "upstream_path": "skills/ponytail/SKILL.md",
+          "source_url": "https://raw.githubusercontent.com/DietrichGebert/ponytail/552acd5efd0aeae2583a12efe39373d2f076f25e/skills/ponytail/SKILL.md",
+          "sha256": "1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2"
+        }
+      ],
+      "unmodified": true
+    },
+    {
+      "name": "caveman",
+      "original_author": "Julius Brussee (JuliusBrussee)",
+      "source_url": "https://github.com/JuliusBrussee/caveman",
+      "commit_sha": "6571943370f7c9d4de1946481177ee7b306cd8e8",
+      "license": "Apache-2.0",
+      "files": [
+        {
+          "path": "third_party/caveman/LICENSE",
+          "upstream_path": "LICENSE",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "third_party/caveman/NOTICE",
+          "upstream_path": "NOTICE",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/NOTICE",
+          "sha256": "20112dc6e62e91da4f03c29fd10cfa41743a9c526389fdf1396c3649c18216fc"
+        },
+        {
+          "path": "third_party/caveman/README.md",
+          "upstream_path": "skills/caveman/README.md",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/skills/caveman/README.md",
+          "sha256": "cbe0c714a696d95e8378858c812f3f3157fabf6929cc4cd28f3dcd48123b975b"
+        },
+        {
+          "path": "third_party/caveman/SKILL.md",
+          "upstream_path": "skills/caveman/SKILL.md",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/skills/caveman/SKILL.md",
+          "sha256": "34255a0215a7701eb83d508d03bc9560dc7bffbeb95a145ad2921ad2598a03bf"
+        },
+        {
+          "path": "third_party/caveman/LICENSING.md",
+          "upstream_path": "LICENSING.md",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/LICENSING.md",
+          "sha256": "8db395e0461eb079c146779865748ac51546004925c72999ae2e266efb595a32"
+        },
+        {
+          "path": "third_party/caveman/LICENSE-MIT",
+          "upstream_path": "LICENSE-MIT",
+          "source_url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/6571943370f7c9d4de1946481177ee7b306cd8e8/LICENSE-MIT",
+          "sha256": "5eb826cd03151bcc7cce3f80d40e87733237fedfc6c36d6908aca5fd650a0bdb"
+        }
+      ],
+      "unmodified": true
+    },
+    {
+      "name": "ml-paper-writing",
+      "original_author": "Orchestra Research",
+      "source_url": "https://github.com/orchestra-research/AI-Research-SKILLs",
+      "commit_sha": "773a52944ba4747a18bd4ae9ade53fff041adcbc",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "third_party/ml-paper-writing/SKILL.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/SKILL.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/SKILL.md",
+          "sha256": "96733e6d758642d792ed15b7c08eb90548d4775099368cd72a8312127f2fe911"
+        },
+        {
+          "path": "third_party/ml-paper-writing/references/checklists.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/references/checklists.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/references/checklists.md",
+          "sha256": "32ae2ab79544ce6476c393e5a95bdc1851ed21da1c5339fa53fa4067e881c696"
+        },
+        {
+          "path": "third_party/ml-paper-writing/references/citation-workflow.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/references/citation-workflow.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/references/citation-workflow.md",
+          "sha256": "067a3b02daa8b4d0f3238e64d34f471bb359b96e75ddce8fa962aaf5e431e7ed"
+        },
+        {
+          "path": "third_party/ml-paper-writing/references/reviewer-guidelines.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/references/reviewer-guidelines.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/references/reviewer-guidelines.md",
+          "sha256": "8430203306cb842f5768a4869a5dcfa3fc393b0a0f9539ac60668aaa1f2481ce"
+        },
+        {
+          "path": "third_party/ml-paper-writing/references/sources.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/references/sources.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/references/sources.md",
+          "sha256": "0f02129a3507af742d162cacd2d6e52a14c6bff03f339f6c9c91e5ccfcf0ac27"
+        },
+        {
+          "path": "third_party/ml-paper-writing/references/writing-guide.md",
+          "upstream_path": "20-ml-paper-writing/ml-paper-writing/references/writing-guide.md",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/20-ml-paper-writing/ml-paper-writing/references/writing-guide.md",
+          "sha256": "ed5ff6960a04bd385b6a28577a26428056e35920001b1916240a4eb563f54709"
+        },
+        {
+          "path": "third_party/ml-paper-writing/LICENSE",
+          "upstream_path": "LICENSE",
+          "source_url": "https://raw.githubusercontent.com/orchestra-research/AI-Research-SKILLs/773a52944ba4747a18bd4ae9ade53fff041adcbc/LICENSE",
+          "sha256": "80b5899a9ab121a2d4aae63724f0c11defba7f23da487086932bb9abfb0f2a00"
+        }
+      ],
+      "unmodified": true
+    },
+    {
+      "name": "grounded-citations",
+      "original_author": "Hermes Agent + Teknium (Nous Research maintainer)",
+      "source_url": "https://github.com/NousResearch/hermes-agent",
+      "commit_sha": "79af3f6cea8067284a7ea5725078578b3f790adb",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "third_party/grounded-citations/LICENSE",
+          "upstream_path": "LICENSE",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/LICENSE",
+          "sha256": "821556e6336796450ab852d375117b48a4887e71d255794fd6318d99982a5ab6"
+        },
+        {
+          "path": "third_party/grounded-citations/SKILL.md",
+          "upstream_path": "skills/research/grounded-citations/SKILL.md",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/skills/research/grounded-citations/SKILL.md",
+          "sha256": "19fba3a4ceedf768af6851e094b268a66b62af750d4d0689c5d62d5d50c032b6"
+        },
+        {
+          "path": "third_party/grounded-citations/references/citation-formats.md",
+          "upstream_path": "skills/research/grounded-citations/references/citation-formats.md",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/skills/research/grounded-citations/references/citation-formats.md",
+          "sha256": "209312a46dd9516e44e78f617589f789e07d54660e347b6b3882e8ac60097d04"
+        },
+        {
+          "path": "third_party/grounded-citations/references/grounding-rationale.md",
+          "upstream_path": "skills/research/grounded-citations/references/grounding-rationale.md",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/skills/research/grounded-citations/references/grounding-rationale.md",
+          "sha256": "2835754857ea05a1c801e88a50d4c2b4cc6ebd52cc4cc1f5741dba05f5af73c1"
+        },
+        {
+          "path": "third_party/grounded-citations/scripts/_hermes_home.py",
+          "upstream_path": "skills/research/grounded-citations/scripts/_hermes_home.py",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/skills/research/grounded-citations/scripts/_hermes_home.py",
+          "sha256": "4bfa31ce48ffaca3ae3fdd2ba5f093a2bedc34b057eec22a38f46e2d68b333d4"
+        },
+        {
+          "path": "third_party/grounded-citations/scripts/sources.py",
+          "upstream_path": "skills/research/grounded-citations/scripts/sources.py",
+          "source_url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/79af3f6cea8067284a7ea5725078578b3f790adb/skills/research/grounded-citations/scripts/sources.py",
+          "sha256": "a867ae6ba99166b4114bfef1c15b57036e286fe22c48534caec28cc8335bde0c"
+        }
+      ],
+      "unmodified": true
+    }
+  ]
+}

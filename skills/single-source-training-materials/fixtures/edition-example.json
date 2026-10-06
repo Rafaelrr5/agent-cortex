@@ -1,0 +1,35 @@
+{
+  "title": "Example Workshop: Small Experiments",
+  "slides": [
+    {
+      "kind": "agenda",
+      "title": "Agenda",
+      "items": [
+        "Define the question",
+        "Compare the outcome"
+      ]
+    },
+    {
+      "kind": "learning",
+      "title": "Learning points",
+      "items": [
+        "Use identical inputs for fair comparisons.",
+        "Report limitations with each result."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "question": "What makes the comparison fair?",
+      "choices": [
+        "Identical inputs",
+        "Different inputs"
+      ],
+      "answer": 0,
+      "learning_index": 0
+    }
+  ],
+  "references": [
+    "https://example.com/"
+  ]
+}
