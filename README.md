@@ -5,8 +5,8 @@ Long-term memory and working discipline for coding agents.
 An agent's context window is short-term memory. Everything it learned about your
 stack dies when the session ends, so you explain the same procedure again next
 week. This repo is the part that survives: a single-file memory store, 30
-working procedures, four scheduled-job examples and a separately credited
-collection of skills by other authors.
+working procedures, four scheduled-job examples, a WezTerm/Hermes terminal setup
+and a separately credited collection of skills by other authors.
 
 The original procedures are extracted from my daily setup with client-specific
 material removed. The runnable examples use isolated fixtures rather than live
@@ -165,6 +165,15 @@ scheduler recipe is disabled by default; nothing registers or runs a job for you
 All 19 tests pass, including CLI lifecycles and disposable local Git remotes.
 State assumes one writer. Output on stdout is not a delivered notification;
 connecting a real scheduler or destination is a separate, explicit operation.
+
+## `setups/` — daily terminal configuration
+
+[`wezterm-hermes`](setups/wezterm-hermes) starts Hermes when WezTerm opens or a
+new tab is created, then restores each tab's own conversation on normal restart.
+The copy uses configurable paths and ships no live session state. Thirteen tests
+execute the actual Lua with temporary files; a separate probe checks the native
+Hermes breadcrumb writer. GUI relaunch is explicitly not claimed as verified.
+The setup guide includes installation, failure recovery and persistence limits.
 
 ## Useful skills by other authors
 
