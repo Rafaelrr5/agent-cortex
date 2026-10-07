@@ -1,7 +1,7 @@
 ---
 name: first-run-onboarding
 description: "Use on a non-technical user's first Hermes session. Safe defaults, then a short interview."
-version: 1.0.0
+version: 1.1.0
 author: Rafael Rocha Ribeiro (github.com/Rafaelrr5)
 license: MIT
 platforms: [linux, macos, windows]
@@ -25,9 +25,10 @@ of this skill is that the **second** conversation already opens with the agent k
 
 ## Conversation rules (whole session)
 
-- Talk in the user's language. If the skill was invoked with no other text, read
-  `hermes config get display.language` and use that; if it is `en` or empty, open with one
-  line asking which language they prefer.
+- **First message: ask which language to use**, in one short line written in the likely
+  languages side by side (e.g. "Português, English, Español?"). Skip the question only if the
+  invocation already named a language. Use that language for everything after, including
+  the saved facts.
 - Short sentences, second person, warm. No jargon: if a technical word is unavoidable,
   explain in one sentence what it means **for them**.
 - **One question at a time.** Wait for the answer.
@@ -41,7 +42,7 @@ of this skill is that the **second** conversation already opens with the agent k
 
 ## Step 1 - Agree on the plan
 
-In at most four lines: two quick settings, two new skills, six questions about them, and at
+After the language answer, in at most four lines: two quick settings, two new skills, six questions about them, and at
 the end the list of what was saved, for them to check. Ask if you can start.
 
 ## Step 2 - Safety and language

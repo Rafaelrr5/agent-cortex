@@ -1,0 +1,10 @@
+{
+  "name": "modelos-contas",
+  "label": "Modelos e Contas",
+  "description": "Modelo padrao, reservas, prioridade das contas e limites de uso em uma tela",
+  "icon": "Sparkles",
+  "version": "1.0.0",
+  "tab": { "path": "/modelos-contas", "position": "after:skills" },
+  "entry": "dist/index.js",
+  "api": "plugin_api.py"
+}

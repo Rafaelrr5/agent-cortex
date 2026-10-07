@@ -175,6 +175,19 @@ execute the actual Lua with temporary files; a separate probe checks the native
 Hermes breadcrumb writer. GUI relaunch is explicitly not claimed as verified.
 The setup guide includes installation, failure recovery and persistence limits.
 
+## `plugins/` — Hermes dashboard panel
+
+[`modelos-contas`](plugins/modelos-contas) adds a "Modelos e Contas" tab to the
+Hermes dashboard: default model, fallback chain, account priority per provider
+and live usage limits for Claude and ChatGPT subscriptions, in one screen. It is
+the visual model picker for people running Hermes in a terminal instead of the
+desktop app. Self-contained in its folder; the UI is in Portuguese.
+
+```bash
+hermes plugins install Rafaelrr5/agent-cortex/plugins/modelos-contas --enable
+hermes dashboard   # then open http://127.0.0.1:9119/modelos-contas?profile=default
+```
+
 ## Useful skills by other authors
 
 These are curated upstream copies, **not my work**. They are kept separate from

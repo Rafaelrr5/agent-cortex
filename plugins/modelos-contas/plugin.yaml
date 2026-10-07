@@ -1,0 +1,5 @@
+name: modelos-contas
+version: 1.0.0
+description: "Painel do dashboard: modelo padrao, reservas, prioridade das contas e limites de uso."
+author: Rafael Rocha Ribeiro (github.com/Rafaelrr5)
+kind: standalone
