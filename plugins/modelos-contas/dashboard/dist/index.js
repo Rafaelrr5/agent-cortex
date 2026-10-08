@@ -110,20 +110,22 @@
         .then((p) => setOpts((p && p.providers) || [])).catch(() => setOpts([]));
     }, []);
 
-    const savePrimary = (confirm) => {
+    // Grava o modelo padrao pela rota nativa; resolve true quando gravou.
+    const setMain = (target, confirm) => post("/api/model/set", { scope: "main", provider: target.provider,
+      model: target.model, base_url: target.base_url || undefined, confirm_expensive_model: !!confirm })
+      .then((r) => {
+        if (r && r.confirm_required) {
+          return window.confirm(r.confirm_message + "\n\nSalvar mesmo assim?") ? setMain(target, true) : false;
+        }
+        if (r && r.ok === false) throw new Error(r.error || r.detail || "falhou");
+        return true;
+      });
+
+    const savePrimary = () => {
       if (!primary.provider || !primary.model) return say("Escolha provedor e modelo.", true);
       setBusy(true);
-      post("/api/model/set", { scope: "main", provider: primary.provider, model: primary.model,
-        confirm_expensive_model: !!confirm })
-        .then((r) => {
-          if (r && r.confirm_required) {
-            if (window.confirm(r.confirm_message + "\n\nSalvar mesmo assim?")) return savePrimary(true);
-            return;
-          }
-          if (r && r.ok === false) throw new Error(r.error || r.detail || "falhou");
-          say("Modelo padrao salvo. Vale para conversas novas.");
-          return loadState();
-        })
+      setMain(primary, false)
+        .then((ok) => { if (!ok) return; say("Modelo padrao salvo. Vale para conversas novas."); return loadState(); })
         .catch((e) => say("Nao foi possivel salvar o modelo padrao: " + (e.message || e), true))
         .finally(() => setBusy(false));
     };
@@ -137,11 +139,40 @@
         .finally(() => setBusy(false));
     };
 
+    // Padrao + reservas como uma lista so: subir uma reserva para o topo a torna o modelo padrao.
+    const moveOrder = (i, d) => {
+      const all = [primary].concat(chain); const j = i + d;
+      if (j < 0 || j >= all.length) return;
+      [all[i], all[j]] = [all[j], all[i]];
+      setPrimary(all[0]); setChain(all.slice(1));
+    };
+
+    const saveOrder = () => {
+      if ([primary].concat(chain).some((c) => !c.provider || !c.model)) return say("Complete provedor e modelo em cada linha.", true);
+      setBusy(true);
+      (dirtyPrimary ? setMain(primary, false) : Promise.resolve(true))
+        .then((ok) => {
+          if (!ok) return false;
+          return dirtyChain ? post(API + "/fallback", { chain }).then(() => true) : true;
+        })
+        .then((ok) => { if (!ok) return; say("Ordem salva. Vale para conversas novas."); return loadState(); })
+        .catch((e) => say("Nao foi possivel salvar a ordem: " + (e.message || e), true))
+        .finally(() => setBusy(false));
+    };
+
     const move = (provider, entry, to) => {
       setBusy(true);
       post(API + "/priority", { provider, id: entry.id, priority: to })
         .then((r) => { if (r && r.note) say(r.note); return loadState(); })
         .catch((e) => say("Nao foi possivel mudar a prioridade: " + (e.message || e), true))
+        .finally(() => setBusy(false));
+    };
+
+    const toggle = (provider, entry) => {
+      setBusy(true);
+      post(API + "/enabled", { provider, id: entry.id, enabled: entry.disabled })
+        .then(() => { say(entry.disabled ? "Conta liberada para o Hermes." : "Conta bloqueada: continua logada, o Hermes pula ela."); return loadState(); })
+        .catch((e) => say("Nao foi possivel mudar o bloqueio: " + (e.message || e), true))
         .finally(() => setBusy(false));
     };
 
@@ -156,7 +187,7 @@
       JSON.stringify((st.fallback || []).map((c) => [c.provider, c.model]));
 
     const poolMap = useMemo(() => {
-      const m = {}; ((st && st.pools) || []).forEach((p) => { m[p.provider] = p; }); return m;
+      const m = {}; ((st && st.pools) || []).forEach((p) => { m[p.provider] = p; if (p.serves) m[p.serves] = p; }); return m;
     }, [st]);
 
     if (!st) return h("div", { style: { padding: 24 } }, "Carregando...");
@@ -164,27 +195,33 @@
 
     const usable = (prov) => {
       const p = poolMap[prov]; if (!p) return null;
-      return p.entries.filter((e) => e.status.kind === "ok" || e.status.kind === "warn").length + "/" + p.entries.length;
+      if (p.external) return p.entries[0].label;
+      return p.entries.filter((e) => !e.disabled && (e.status.kind === "ok" || e.status.kind === "warn")).length
+        + "/" + p.entries.length + " conta(s) disponivel(is)";
     };
     const Btn = (props) => h(C.Button, Object.assign({ size: "sm", variant: "outline", disabled: busy }, props));
 
-    // --- ordem efetiva
-    const order = [{ role: "Padrao", provider: st.primary.provider, model: st.primary.model }]
-      .concat((st.fallback || []).map((f, i) => ({ role: "Reserva " + (i + 1), provider: f.provider, model: f.model })));
+    // --- ordem editavel (estado local; "Salvar ordem" grava padrao e reservas)
+    const order = [primary].concat(chain).map((o, i) => Object.assign({ role: i ? "Reserva " + i : "Padrao" }, o));
 
     return h("div", { style: { maxWidth: 1000, padding: "8px 4px" } },
       msg ? h("div", { style: { position: "sticky", top: 0, zIndex: 5, padding: "10px 14px", marginBottom: 12, borderRadius: 8,
         background: msg.bad ? "#fee2e2" : "#dcfce7", color: msg.bad ? "#991b1b" : "#166534" } }, msg.text) : null,
 
       h(Section, { title: "Ordem em que o Hermes tenta",
-        hint: "Primeiro todas as contas do provedor padrao, na ordem de prioridade; so depois as reservas." },
+        hint: "Use as setas para mudar a ordem; o primeiro vira o modelo padrao. Dentro de cada provedor, todas as contas sao tentadas antes de passar para o proximo." },
         order.map((o, i) => h("div", { key: i, style: { display: "flex", gap: 12, alignItems: "center", padding: "6px 0",
           borderTop: i ? "1px solid var(--border, #e5e7eb)" : "none" } },
           h("b", { style: { width: 24, opacity: 0.6 } }, i + 1),
-          h("div", { style: { flex: 1 } }, h("div", { style: { fontWeight: 600 } }, o.model),
-            h("div", { style: { fontSize: 12, opacity: 0.7 } }, o.role + " · " + o.provider)),
-          usable(o.provider) == null ? h("span", { style: { fontSize: 12, opacity: 0.7 } }, "sem conta no pool")
-            : h("span", { style: { fontSize: 12 } }, usable(o.provider) + " conta(s) disponivel(is)")))),
+          h("div", { style: { flex: 1 } }, h("div", { style: { fontWeight: 600 } }, o.model || "(escolha o modelo)"),
+            h("div", { style: { fontSize: 12, opacity: 0.7 } }, o.role + " · " + (o.provider || "?"))),
+          h("span", { style: { fontSize: 12, opacity: usable(o.provider) == null ? 0.7 : 1 } },
+            usable(o.provider) == null ? "sem conta no pool" : usable(o.provider)),
+          order.length > 1 ? h(Btn, { title: "Tentar antes", disabled: busy || i === 0, onClick: () => moveOrder(i, -1) }, "↑") : null,
+          order.length > 1 ? h(Btn, { title: "Tentar depois", disabled: busy || i === order.length - 1, onClick: () => moveOrder(i, 1) }, "↓") : null)),
+        (dirtyPrimary || dirtyChain) ? h("div", { style: { display: "flex", gap: 8, marginTop: 10 } },
+          h(C.Button, { size: "sm", disabled: busy, onClick: saveOrder }, "Salvar ordem"),
+          h(Btn, { onClick: () => { setPrimary(Object.assign({}, st.primary)); setChain((st.fallback || []).map((f) => Object.assign({}, f))); } }, "Desfazer")) : null),
 
       h(Section, { title: "Modelo padrao", hint: "Gravado na configuracao do Hermes; vale para conversas novas." },
         h("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
@@ -216,8 +253,8 @@
         st.pools.map((p) => h("div", { key: p.provider, style: { marginBottom: 18 } },
           h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline",
             borderBottom: "1px solid var(--border, #e5e7eb)", paddingBottom: 4, marginBottom: 6 } },
-            h("b", null, p.provider + (p.provider === st.primary.provider ? "  (padrao)" : "")),
-            h("span", { style: { fontSize: 12, opacity: 0.7 } }, "estrategia " + p.strategy)),
+            h("b", null, (p.title || p.provider) + (p.provider === st.primary.provider || p.serves === st.primary.provider ? "  (padrao)" : "")),
+            h("span", { style: { fontSize: 12, opacity: 0.7 } }, p.external ? "login fora do pool" : "estrategia " + p.strategy)),
           p.entries.map((e, idx) => {
             const q = (lim && lim.accounts && lim.accounts[e.id]) || null;
             return h("div", { key: e.id, style: { padding: "8px 0", borderTop: idx ? "1px dashed var(--border, #e5e7eb)" : "none" } },
@@ -226,8 +263,11 @@
                 h("div", { style: { flex: 1, minWidth: 200 } },
                   h("div", { style: { fontWeight: 600 } }, e.label),
                   h("div", { style: { fontSize: 12, opacity: 0.7 } },
-                    [q && q.email, q && q.plan, e.source, e.requests + " uso(s)"].filter(Boolean).join(" · "))),
+                    [q && q.email, q && q.plan, e.source, e.requests != null ? e.requests + " uso(s)" : null].filter(Boolean).join(" · "))),
                 h(Pill, { status: e.status }),
+                st.capabilities && st.capabilities.disable && !p.external && !p.serves
+                  ? h(Btn, { title: e.disabled ? "Deixar o Hermes usar esta conta" : "Manter logada, mas o Hermes nao usa",
+                    onClick: () => toggle(p.provider, e) }, e.disabled ? "Liberar" : "Bloquear") : null,
                 p.entries.length > 1 ? h(Btn, { title: e.can_up ? "Subir prioridade" : (e.locked_reason || ""), disabled: busy || !e.can_up, onClick: () => move(p.provider, e, idx - 1) }, "↑") : null,
                 p.entries.length > 1 ? h(Btn, { title: e.can_down ? "Descer prioridade" : (e.locked_reason || ""), disabled: busy || !e.can_down, onClick: () => move(p.provider, e, idx + 1) }, "↓") : null),
               e.locked_reason ? h("div", { style: { paddingLeft: 38, fontSize: 12, opacity: 0.75, marginTop: 2 } }, "🔒 " + e.locked_reason) : null,

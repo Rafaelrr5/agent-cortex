@@ -7,11 +7,16 @@ POST /api/model/set (chamada direto pelo frontend). Tokens so sao renovados em
 memoria para consultar cota: auth.json nunca e reescrito por esta leitura.
 """
 import json
+import os
+import sqlite3
+import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -26,6 +31,8 @@ _SECRET_KEYS = {"access_token", "refresh_token", "api_key", "id_token", "agent_k
 
 # --------------------------------------------------------------------------- state
 def _status(e: Dict[str, Any], now: float) -> Dict[str, Any]:
+    if e.get("disabled"):
+        return {"kind": "reserva", "text": "bloqueada por voce", "until": None}
     reset = e.get("last_error_reset_at")
     if e.get("last_status") == "exhausted" and reset and float(reset) > now:
         if e.get("last_error_reason") == "reserva_urgencia_manual":
@@ -41,6 +48,46 @@ def _status(e: Dict[str, Any], now: float) -> Dict[str, Any]:
 def _raw_pool() -> Dict[str, List[Dict[str, Any]]]:
     from hermes_cli.auth import read_credential_pool
     return read_credential_pool() or {}
+
+
+def _env(name: str) -> str:
+    """Valor do .env do perfil ativo (o dashboard pode servir varios perfis)."""
+    try:
+        from agent.secret_scope import get_secret_str
+        value = get_secret_str(name, "")
+    except Exception:
+        value = os.getenv(name, "")
+    if not value:
+        try:
+            from hermes_cli.config import load_env
+            value = (load_env() or {}).get(name, "")
+        except Exception:
+            value = ""
+    return (value or "").strip()
+
+
+def _acp_command() -> str:
+    """Executavel por tras do provedor copilot-acp (o usuario pode apontar para o Kiro)."""
+    return _env("HERMES_COPILOT_ACP_COMMAND") or _env("COPILOT_CLI_PATH") or "copilot"
+
+
+def _is_kiro(command: str) -> bool:
+    return Path(command).name.lower().startswith("kiro")
+
+
+def _external_label(provider: str) -> str:
+    if provider == "copilot-acp":
+        return "Kiro (via ACP)" if _is_kiro(_acp_command()) else "GitHub Copilot CLI (via ACP)"
+    return "login fora do pool"
+
+
+def _can_disable() -> bool:
+    """`hermes auth disable` ainda nao existe em todo Hermes: sem ele o botao some."""
+    try:
+        from agent.credential_pool import CredentialPool
+        return hasattr(CredentialPool, "set_user_disabled")
+    except Exception:
+        return False
 
 
 def _state() -> Dict[str, Any]:
@@ -62,16 +109,37 @@ def _state() -> Dict[str, Any]:
                 "id": e.get("id"), "label": e.get("label"), "priority": e.get("priority"),
                 "auth_type": e.get("auth_type"), "source": e.get("source"),
                 "requests": e.get("request_count", 0), "status": _status(e, now),
-                "error": e.get("last_error_message"),
+                "error": e.get("last_error_message"), "disabled": bool(e.get("disabled")),
                 "can_up": i > 0, "can_down": i < len(ordered) - 1, "locked_reason": None,
             })
         if rows:
             pools.append({"provider": provider, "strategy": strategies.get(provider, "fill_first"), "entries": rows})
+    primary = {"provider": m.get("provider"), "model": m.get("default") or m.get("model"),
+               "base_url": m.get("base_url") or None}
+    fallback = [{"provider": f.get("provider"), "model": f.get("model"), "base_url": f.get("base_url")}
+                for f in get_fallback_chain(cfg)]
+    # Provedores da ordem sem conta no pool (ex.: copilot-acp/Kiro, que se autentica sozinho)
+    # tambem aparecem, para mostrar a cota quando o provedor informa. Com o copilot-acp apontado
+    # para o Kiro, o token do GitHub no pool `copilot` so libera o provedor: o bloco vira o do Kiro.
+    if _is_kiro(_acp_command()):
+        for pool in pools:
+            if pool["provider"] == "copilot":
+                pool["serves"], pool["title"] = "copilot-acp", "copilot · " + _external_label("copilot-acp")
+    pooled = {p["provider"] for p in pools} | {p["serves"] for p in pools if p.get("serves")}
+    for prov in dict.fromkeys(o["provider"] for o in [primary, *fallback] if o.get("provider")):
+        if prov in pooled:
+            continue
+        pools.append({"provider": prov, "strategy": None, "external": True, "entries": [{
+            "id": _EXTERNAL_PREFIX + prov, "label": _external_label(prov), "priority": 0,
+            "auth_type": "externo", "source": None, "requests": None, "disabled": False,
+            "status": {"kind": "ok", "text": "login externo", "until": None}, "error": None,
+            "can_up": False, "can_down": False, "locked_reason": None,
+        }]})
     return {
-        "primary": {"provider": m.get("provider"), "model": m.get("default") or m.get("model")},
-        "fallback": [{"provider": f.get("provider"), "model": f.get("model"), "base_url": f.get("base_url")}
-                     for f in get_fallback_chain(cfg)],
+        "primary": primary,
+        "fallback": fallback,
         "pools": pools,
+        "capabilities": {"disable": _can_disable()},
         "now": now,
     }
 
@@ -102,6 +170,30 @@ async def set_priority(body: PriorityBody):
             raise HTTPException(status_code=404, detail="conta nao encontrada neste provedor")
         note = "Posicao ajustada ao tamanho da lista." if moved.priority != body.priority else None
         return {"ok": True, "effective": moved.priority, "note": note}
+
+    return await run_in_threadpool(_run)
+
+
+# --------------------------------------------------------------------------- block / release
+class EnabledBody(BaseModel):
+    provider: str
+    id: str
+    enabled: bool
+
+
+@router.post("/enabled")
+async def set_enabled(body: EnabledBody):
+    """Mesma funcao do core que `hermes auth disable|enable`: a conta continua logada."""
+    from agent.credential_pool import load_pool
+
+    if not _can_disable():
+        raise HTTPException(status_code=501, detail="este Hermes ainda nao tem `hermes auth disable`")
+
+    def _run():
+        pool = load_pool(body.provider.strip().lower())
+        if pool.set_user_disabled(body.id, not body.enabled) is None:
+            raise HTTPException(status_code=404, detail="conta nao encontrada neste provedor")
+        return {"ok": True}
 
     return await run_in_threadpool(_run)
 
@@ -255,17 +347,101 @@ def _quota_codex(e: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
+def _kiro_db() -> Optional[Path]:
+    home = Path.home()
+    candidates = [Path(os.environ.get("LOCALAPPDATA", str(home))) / "kiro-cli" / "data.sqlite3",
+                  home / ".local" / "share" / "kiro-cli" / "data.sqlite3",
+                  home / "Library" / "Application Support" / "kiro-cli" / "data.sqlite3"]
+    return next((p for p in candidates if p.is_file()), None)
+
+
+def _kiro_session(db: Path):
+    """(access_token, expira_em_epoch, profile_arn) do banco do kiro-cli, so leitura."""
+    with closing(sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=5)) as c:
+        row = c.execute("select value from auth_kv where key = 'kirocli:odic:token'").fetchone()
+        prof = c.execute("select value from state where key = 'api.codewhisperer.profile'").fetchone()
+    if not row:
+        return None, 0.0, None
+    tok = json.loads(row[0])
+    try:
+        exp = datetime.strptime(str(tok.get("expires_at"))[:19], "%Y-%m-%dT%H:%M:%S").replace(
+            tzinfo=timezone.utc).timestamp()
+    except ValueError:
+        exp = 0.0
+    return tok.get("access_token"), exp, (json.loads(prof[0]).get("arn") if prof else None)
+
+
+def _kiro_renew(command: str) -> None:
+    """O proprio kiro-cli renova e grava o login dele; `/usage` nao gasta credito."""
+    flags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW
+    try:
+        subprocess.run([command, "chat", "--no-interactive", "/usage"], capture_output=True,
+                       stdin=subprocess.DEVNULL, timeout=60, creationflags=flags)
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
+def _quota_kiro(command: str) -> Dict[str, Any]:
+    db = _kiro_db()
+    if db is None:
+        return {"error": "login do Kiro nao encontrado neste computador (rode `kiro-cli login`)"}
+    tok, exp, arn = _kiro_session(db)
+    if not tok or exp < time.time() + 60:
+        _kiro_renew(command)
+        tok, exp, arn = _kiro_session(db)
+    if not tok or exp < time.time():
+        return {"error": "login do Kiro expirado: rode `kiro-cli login`"}
+    if not arn:
+        return {"error": "perfil do Kiro nao encontrado (rode `kiro-cli profile`)"}
+    query = urllib.parse.urlencode({"origin": "AI_EDITOR", "profileArn": arn, "resourceType": "AGENTIC_REQUEST"})
+    region = arn.split(":")[3] if arn.count(":") >= 4 else "us-east-1"
+    c, u = _http(f"https://q.{region}.amazonaws.com/getUsageLimits?{query}",
+                 {"Authorization": f"Bearer {tok}", "Accept": "application/json"})
+    if c != 200 or not isinstance(u, dict):
+        return {"error": _friendly(c, u)}
+    sub = u.get("subscriptionInfo") or {}
+    out: Dict[str, Any] = {"windows": [], "plan": sub.get("subscriptionTitle"),
+                           "email": (u.get("userInfo") or {}).get("email")}
+    for b in u.get("usageBreakdownList") or []:
+        for item, prefix in ((b, ""), (b.get("freeTrialInfo") or {}, "Teste gratis: ")):
+            used = item.get("currentUsageWithPrecision", item.get("currentUsage"))
+            limit = item.get("usageLimitWithPrecision", item.get("usageLimit"))
+            if used is None or not limit:
+                continue
+            name = b.get("displayNamePlural") or b.get("displayName") or "Uso"
+            out["windows"].append({"label": f"{prefix}{name} {used:g}/{limit:g}", "pct": used / limit * 100,
+                                   "reset": item.get("nextDateReset") or b.get("nextDateReset") or u.get("nextDateReset")})
+    if not out["windows"]:
+        out["error"] = "o Kiro nao informou limite para esta conta"
+    return out
+
+
+def _external_fetcher(provider: str):
+    """Cota de provedor que se autentica fora do pool, quando existe uma API para isso."""
+    if provider == "copilot-acp":
+        command = _acp_command()
+        if _is_kiro(command):
+            return lambda: _quota_kiro(command)
+    return None
+
+
+_EXTERNAL_PREFIX = "externo:"
 _FETCHERS = {"anthropic": _quota_anthropic, "openai-codex": _quota_codex}
 _cache: Dict[str, Any] = {"at": 0.0, "data": None}
 
 
 def _limits() -> Dict[str, Any]:
-    jobs = [(p, e) for p, es in _raw_pool().items() if p in _FETCHERS for e in es]
+    jobs = [(p, e.get("id"), (lambda f=_FETCHERS[p], e=e: f(e)))
+            for p, es in _raw_pool().items() if p in _FETCHERS for e in es]
+    for pool in _state()["pools"]:
+        fetch = _external_fetcher(pool.get("serves") or pool["provider"]) if pool.get("external") or pool.get("serves") else None
+        if fetch:
+            jobs.append((pool["provider"], pool["entries"][0]["id"], fetch))
     with ThreadPoolExecutor(max_workers=6) as ex:
-        results = list(ex.map(lambda pe: _FETCHERS[pe[0]](pe[1]), jobs))
+        results = list(ex.map(lambda job: job[2](), jobs))
     accounts = {}
-    for (p, e), q in zip(jobs, results):
-        accounts[e.get("id")] = {"provider": p, **{k: v for k, v in q.items() if k not in _SECRET_KEYS}}
+    for (p, entry_id, _), q in zip(jobs, results):
+        accounts[entry_id] = {"provider": p, **{k: v for k, v in q.items() if k not in _SECRET_KEYS}}
     return {"accounts": accounts, "checked_at": datetime.now().strftime("%d/%m %H:%M")}
 
 

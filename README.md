@@ -178,8 +178,9 @@ The setup guide includes installation, failure recovery and persistence limits.
 ## `plugins/` — Hermes dashboard panel
 
 [`modelos-contas`](plugins/modelos-contas) adds a "Modelos e Contas" tab to the
-Hermes dashboard: default model, fallback chain, account priority per provider
-and live usage limits for Claude and ChatGPT subscriptions, in one screen. It is
+Hermes dashboard: provider order (the first one becomes the default model), fallback
+chain, account priority and block/release per provider, and live usage limits for
+Claude, ChatGPT and Kiro subscriptions, in one screen. It is
 the visual model picker for people running Hermes in a terminal instead of the
 desktop app. Self-contained in its folder; the UI is in Portuguese.
 
