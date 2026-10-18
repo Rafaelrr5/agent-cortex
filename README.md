@@ -175,6 +175,15 @@ execute the actual Lua with temporary files; a separate probe checks the native
 Hermes breadcrumb writer. GUI relaunch is explicitly not claimed as verified.
 The setup guide includes installation, failure recovery and persistence limits.
 
+[`hermes-oauth-keepalive`](setups/hermes-oauth-keepalive) fixes "my Hermes
+providers break every week". Backup Claude/ChatGPT accounts sit unused under
+`fill_first`, their refresh tokens expire after a few idle days, and failover
+finds nothing alive. A daily no-agent cron refreshes every Hermes-owned OAuth
+account and alerts only when one needs a new login. One command installs it:
+`python oauth_keepalive.py --install --deliver telegram`. Five tests run the real
+CLI against a fake pool; it also ran against live accounts on Windows and Ubuntu.
+The guide is in Portuguese.
+
 ## `plugins/` — Hermes dashboard panel
 
 [`modelos-contas`](plugins/modelos-contas) adds a "Modelos e Contas" tab to the
