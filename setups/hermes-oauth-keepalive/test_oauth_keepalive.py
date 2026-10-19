@@ -114,5 +114,18 @@ class Keepalive(unittest.TestCase):
         self.assertIn("crie o cron manualmente", r.stdout)
 
 
+class ExpiresIn(unittest.TestCase):
+    def test_anthropic_e_jwt(self):
+        import base64, importlib.util, json as _j, time as _t, types
+        spec = importlib.util.spec_from_file_location("ok_mod", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        soon = types.SimpleNamespace(expires_at_ms=int((_t.time() + 600) * 1000), access_token="x")
+        self.assertAlmostEqual(mod.expires_in_min(soon), 10, delta=1)
+        body = base64.urlsafe_b64encode(_j.dumps({"exp": int(_t.time()) + 7200}).encode()).decode().rstrip("=")
+        jwt = types.SimpleNamespace(expires_at_ms=0, access_token=f"h.{body}.s")
+        self.assertAlmostEqual(mod.expires_in_min(jwt), 120, delta=1)
+
+
 if __name__ == "__main__":
     unittest.main()

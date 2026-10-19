@@ -21,11 +21,13 @@ esta maquina nao tem gateway de mensagens).
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 PROVIDERS = ("anthropic", "openai-codex")
@@ -49,7 +51,20 @@ def load_pool_api():
     return load_pool, STATUS_DEAD, STATUS_EXHAUSTED
 
 
-def check(providers=PROVIDERS) -> list[str]:
+def expires_in_min(e) -> float:
+    """Minutos ate o access token vencer (JWT do Codex ou expires_at_ms da Anthropic)."""
+    ms = int(getattr(e, "expires_at_ms", 0) or 0)
+    tok = getattr(e, "access_token", "") or ""
+    if tok.count(".") == 2:
+        try:
+            body = tok.split(".")[1]
+            ms = max(ms, int(json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4))).get("exp") or 0) * 1000)
+        except (ValueError, TypeError):
+            pass
+    return (ms / 1000 - time.time()) / 60 if ms else 0.0
+
+
+def check(providers=PROVIDERS, within: float = 0) -> list[str]:
     load_pool, dead, exhausted = load_pool_api()
     problems: list[str] = []
     for provider in providers:
@@ -69,6 +84,8 @@ def check(providers=PROVIDERS) -> list[str]:
                 continue
             if e.last_status == exhausted:
                 continue  # em cooldown de cota: o refresh apagaria o cooldown. Renova amanha.
+            if within and expires_in_min(e) > within:
+                continue  # ainda longe de vencer: renovar agora so gastaria o par (ver --within)
             err = None
             try:
                 r = pool.try_refresh_matching(credential_id=e.id)
@@ -129,10 +146,23 @@ def main(argv=None) -> int:
     ap.add_argument("--install", action="store_true", help="copia para HERMES_HOME/scripts e cria o cron diario")
     ap.add_argument("--deliver", default="local", help="destino do aviso no cron (ex.: telegram, all). Padrao: local")
     ap.add_argument("--at", default="10 4 * * *", help="horario cron. Padrao: 04:10 todo dia")
+    ap.add_argument("--within", type=float, default=0,
+                    help="so renova contas que vencem em ate N minutos (0 = renova todas). "
+                         "Use com o cron de hora em hora quando duas maquinas dividem as contas")
     args = ap.parse_args(argv)
+    cfg_path = Path(__file__).with_suffix(".json")
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.is_file() else {}
+    except ValueError:
+        cfg = {}
+    if args.install and args.within:
+        cfg["within"] = args.within  # o cron nao passa argumentos: guarda no .json ao lado
+        cfg_path = hermes_home() / "scripts" / "oauth_keepalive.json"
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
     if args.install:
         return install(args.deliver, args.at)
-    problems = check()
+    problems = check(within=args.within or float(cfg.get("within") or 0))
     if problems:
         msg = message(problems)
         print(msg)
