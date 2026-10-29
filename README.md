@@ -4,8 +4,8 @@ Long-term memory and working discipline for coding agents.
 
 An agent's context window is short-term memory. Everything it learned about your
 stack dies when the session ends, so you explain the same procedure again next
-week. This repo is the part that survives: a single-file memory store, 30
-working procedures, four scheduled-job examples, a WezTerm/Hermes terminal setup
+week. This repo is the part that survives: a single-file memory store, 35
+working procedures, five scheduled-job examples, a WezTerm/Hermes terminal setup
 and a separately credited collection of skills by other authors.
 
 The original procedures are extracted from my daily setup with client-specific
@@ -67,7 +67,7 @@ so. It never crashes for a missing optional dependency.
 
 ---
 
-## `skills/` — 30 procedures
+## `skills/` — 35 procedures
 
 Markdown documents, readable by a human and loadable by any agent that supports
 skill files. They encode the checks, not the happy path.
@@ -99,6 +99,25 @@ skill files. They encode the checks, not the happy path.
 | [`domain-dns-cutover`](skills/domain-dns-cutover) | Move a domain to new hosting and verify at the authoritative nameserver, not at your resolver's cache. |
 | [`custom-domain-email`](skills/custom-domain-email) | Own-domain email: SPF, DKIM, DMARC, and diagnosing why mail lands in spam. |
 | [`supabase-auth-debugging`](skills/supabase-auth-debugging) | Login, OAuth and email-link failures, diagnosed by symptom rather than by guesswork. |
+
+### Running Hermes
+
+Operating notes for [Hermes Agent](https://github.com/NousResearch/hermes-agent),
+checked against v0.21. Behaviour that changes between releases says so and points
+at the source file to re-read.
+
+| Skill | What it is for |
+|---|---|
+| [`hermes-cron-jobs`](skills/hermes-cron-jobs) | "Job created" is not "job runs". Prove a scheduled job fires on its own and has the intended effect, including the monitor-mode trap where one failed agent run silences a watcher for hours. |
+| [`hermes-provider-credentials`](skills/hermes-provider-credentials) | Several accounts per provider: pool vs fallback chain, why the pool is always tried before the chain, why per-request rotation destroys the prompt cache, and backup accounts that die while idle. |
+| [`hermes-messaging-channels`](skills/hermes-messaging-channels) | Connect Telegram or another chat app: allowlist before token, one token per poller, and proving the gateway really starts at boot (a measured five-day silent death, plus a Windows watchdog task). |
+| [`hermes-on-oracle-free-tier`](skills/hermes-on-oracle-free-tier) | An always-on Hermes on Oracle's Always Free Arm VM: the current limits, "out of host capacity", idle reclamation, hardening and the reboot test. |
+
+### Planning
+
+| Skill | What it is for |
+|---|---|
+| [`premortem`](skills/premortem) | Run a premortem on any plan with consequences without being asked, then turn its early signals into a scheduled check that only speaks when a number crosses a line. |
 
 ### Windows
 
@@ -160,9 +179,10 @@ scheduler recipe is disabled by default; nothing registers or runs a job for you
 | [`conflict-aware-git-sync`](crons/conflict-aware-git-sync) | A conflict silently overwriting local work, or a sync committing someone else's staged files. Only explicit owned paths may be committed; there is no push operation. |
 | [`change-gated-monitor`](crons/change-gated-monitor) | An assistant waking itself again after replying, or losing its baseline during an outage. The wake identity tracks requests, not replies. |
 | [`approval-aware-retry`](crons/approval-aware-retry) | A human approval gate turning into permission merely because time passed. Operational retries have a cooldown and limit; processing is simulated locally. |
+| [`cron-health-watchdog`](crons/cron-health-watchdog) | A failing or stalled scheduled job nobody notices: errored and overdue Hermes jobs, a dead scheduler, and pg_cron jobs that "succeeded" while the HTTP call behind them returned 500. Alerts once per change; a broken source is reported, never silent. |
 | [`durable-follow-up`](crons/durable-follow-up) | An unresolved obligation disappearing when it ages out of a rolling scan window. Explicit evidence resolves it; replay-safe state retains the decision. |
 
-All 19 tests pass, including CLI lifecycles and disposable local Git remotes.
+All 29 tests pass, including CLI lifecycles and disposable local Git remotes.
 State assumes one writer. Output on stdout is not a delivered notification;
 connecting a real scheduler or destination is a separate, explicit operation.
 

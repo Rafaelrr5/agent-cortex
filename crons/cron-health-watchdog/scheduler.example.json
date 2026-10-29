@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "python_executable": null,
+  "script_path": null,
+  "arguments": [],
+  "cadence_seconds": null,
+  "notification_destination": null,
+  "overlap_policy": "forbid"
+}
